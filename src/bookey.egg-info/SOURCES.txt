@@ -1,0 +1,9 @@
+README.md
+pyproject.toml
+src/bookey/auth.py
+src/bookey.egg-info/PKG-INFO
+src/bookey.egg-info/SOURCES.txt
+src/bookey.egg-info/dependency_links.txt
+src/bookey.egg-info/entry_points.txt
+src/bookey.egg-info/requires.txt
+src/bookey.egg-info/top_level.txt

@@ -1,0 +1,2 @@
+[console_scripts]
+bk = bookey.app:main

@@ -1,0 +1,14 @@
+Metadata-Version: 2.4
+Name: bookey
+Version: 0.1.0
+Summary: A TUI for Google Calendar and Tasks
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: textual>=0.47.0
+Requires-Dist: google-api-python-client
+Requires-Dist: google-auth-httplib2
+Requires-Dist: google-auth-oauthlib
+
+# BOOKEY 
+
+A TUI solution to managing your google calendar. 
