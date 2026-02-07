@@ -1,3 +1,5 @@
 # BOOKEY 
 
-A TUI solution to managing your google calendar. 
+## What is BOOKEY
+
+A TUI solution to managing your calendar. 
