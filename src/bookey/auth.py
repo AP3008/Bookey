@@ -16,6 +16,9 @@ def login():
     else:
         flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
         creds = flow.run_local_server(port=0)
+
+    # When the user is logging in through google, we need to write a token.json file so we can log them in without asking again. 
+
         with open("token.json") as token_json:
             token_json.write(creds.to_json())
 
