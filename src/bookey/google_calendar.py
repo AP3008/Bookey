@@ -13,9 +13,31 @@ class GoogleCalendar:
 
     
     def getTasks(self):
-        results = self.task.tasks().list(tasklist='@default').execute()
-        return results.get('items', [])
 
+        # Fetching raw tasks
+
+        results = self.task.tasks().list(
+            tasklist='@default',
+            showCompleted=False
+        ).execute()
+        
+        raw_tasks = results.get('items', [])
+        
+        # cleaned up version of the tasks being returned using list comprehension
+
+        cleanTasks = [self._parse_task(t) for t in raw_tasks]
+        return sorted(cleanTasks, key=lambda x: x['due'] if x['due'] else '9999-12-31')
+
+    #Helper function to parse through the tasks into only necessary data
+
+    def _parse_task(self, task):
+        return {
+            "id": task.get("id"),
+            "title": task.get("title", "(No Title)"),
+            "notes": task.get("notes", ""),  # Helpful for the 'Framer' or 'AWS' notes you have
+            "due": task.get("due"),          # You might want to show this in the sidebar
+            "status": task.get("status")
+        }
     # Helper function to parse events
 
     def _parse_event(self, event):
@@ -66,11 +88,16 @@ class GoogleCalendar:
             current += timedelta(days=1)
 
         # Sort each event into its day bucket
+
         for event in raw_events:
+
             # Google provides 'dateTime' (specific time) or 'date' (all-day event)
+
             start_raw = event['start'].get('dateTime') or event['start'].get('date')
             event_date = start_raw[:10] # Extract the YYYY-MM-DD part
             
+            # adding events to the dates that we are looking into.
+
             if event_date in organized_data:
                 organized_data[event_date].append(self._parse_event(event))
 
@@ -90,3 +117,8 @@ if __name__ == "__main__":
             for ev in events:
                 start_time = ev['start'][11:16] if not ev['is_all_day'] else "All Day"
                 print(f"  [{start_time}] {ev['title']}")
+    print("\n--- INCOMPLETE TASKS ---")
+    tasks = gc.getTasks()
+    for t in tasks:
+        due_info = f" [Due: {t['due'][:10]}]" if t['due'] else ""
+        print(f"  - {t['title']}{due_info}")
