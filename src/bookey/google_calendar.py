@@ -115,6 +115,17 @@ class GoogleCalendar:
     def delete_calendar(self, eventID):
         return self.calendar.events().delete(calendarId='primary', eventId=eventID).execute()
 
+    def add_task(self, title, notes, due=None):
+        
+        t_body = {
+            'title': title,
+            'notes': notes
+        }
+        if due:
+            t_body['due'] = due
+        return self.task.tasks().insert(tasklist='@default', t_body=body).execute()
+
+
 #if __name__ == '__main__':
     #gc = GoogleCalendar() 
     #print('logged in')
