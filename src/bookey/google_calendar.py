@@ -103,3 +103,26 @@ class GoogleCalendar:
 
         return organized_data
 
+    def add_calendar(self, summary, start_time, end_time, description=""):
+        event = {
+        'summary': summary,
+        'description': description,
+        'start': {'dateTime': start_time, 'timeZone': 'America/Toronto'},
+        'end': {'dateTime': end_time, 'timeZone': 'America/Toronto'},
+        }
+        return self.calendar.events().insert(calendarId="primary", body=event).execute()
+
+    def delete_calendar(self, eventID):
+        return self.calendar.events().delete(calendarId='primary', eventId=eventID).execute()
+
+#if __name__ == '__main__':
+    #gc = GoogleCalendar() 
+    #print('logged in')
+    #event = gc.add_calendar("Test Event from Bookey", "2026-02-09T10:00:00Z", "2026-02-09T11:00:00Z","This is a test task")
+    #eventID = event.get('id')
+    #print(f"the new id: {eventID}")
+    #print('logged in')
+    #print(f"ID to delete: 5p4hd2sqspfv7akhnnaq7tj7f8")
+    #gc.delete_calendar('5p4hd2sqspfv7akhnnaq7tj7f8')
+    #print('Deleted')
+    
