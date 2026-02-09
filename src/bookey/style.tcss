@@ -1,0 +1,26 @@
+#logo {
+    color: $accent;
+    margin-bottom: 2;
+    content-align: center middle;
+}
+
+#welcome {
+    text-align: center;
+    margin-bottom: 2;
+    color: $text-muted;
+}
+
+#menu-options {
+    width: 40;
+    background: transparent;
+    border: double $primary;
+}
+
+ListItem {
+    padding: 1;
+}
+
+ListItem:hover {
+    background: $primary;
+    color: white;
+}
