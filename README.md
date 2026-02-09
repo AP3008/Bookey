@@ -2,4 +2,10 @@
 
 ## What is BOOKEY?
 
-A TUI solution to managing your calendar. 
+A Terminal solution to managing your calendar.
+
+## How to use CLI and Flags 
+
+Will update...
+
+Also TUI component displaying calendar is being worked on...
