@@ -27,21 +27,22 @@ def select_option(prompt, options):
     selected = 0
     count = len(options)
 
+    fd = sys.stdin.fileno()
+    old = termios.tcgetattr(fd)
+
     def render():
         for i, opt in enumerate(options):
             if i == selected:
-                sys.stdout.write(f"{CLEAR_LINE}  {MAUVE}> {i + 1}. {opt}{RESET}\n")
+                sys.stdout.write(f"\r{CLEAR_LINE}  {MAUVE}> {i + 1}. {opt}{RESET}\r\n")
             else:
-                sys.stdout.write(f"{CLEAR_LINE}    {DIM}{i + 1}. {opt}{RESET}\n")
+                sys.stdout.write(f"\r{CLEAR_LINE}    {DIM}{i + 1}. {opt}{RESET}\r\n")
         sys.stdout.flush()
 
-    fd = sys.stdin.fileno()
-    old = termios.tcgetattr(fd)
     sys.stdout.write(HIDE_CURSOR)
     sys.stdout.flush()
-    render()
     try:
         tty.setraw(fd)
+        render()
         while True:
             ch = sys.stdin.read(1)
             if ch == "\r":
@@ -60,12 +61,11 @@ def select_option(prompt, options):
                     break
             elif ch == "\x03":  # Ctrl+C
                 termios.tcsetattr(fd, termios.TCSADRAIN, old)
-                sys.stdout.write(f"{SHOW_CURSOR}\n{RESET}")
+                sys.stdout.write(f"\r{SHOW_CURSOR}\r\n{RESET}")
                 sys.stdout.flush()
                 sys.exit(0)
             # Move cursor up to redraw in place
             sys.stdout.write(f"\033[{count}A")
-            sys.stdout.flush()
             render()
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old)
