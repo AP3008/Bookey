@@ -1,6 +1,8 @@
 #Python
 venv
+__pycache__
 
 #Google Cloud Console Secrets
 credentials.json
 token.json
+

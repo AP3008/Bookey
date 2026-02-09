@@ -18,7 +18,7 @@ class GoogleCalendar:
 
     # Helper function to parse events
 
-    def _parse_events(self, event):
+    def _parse_event(self, event):
         title = event.get('summary', '(No Title)')
         start_info = event.get('start', {})
         end_info = event.get('end', {})
@@ -36,6 +36,7 @@ class GoogleCalendar:
 
     def getCalendarSlots(self, focus_date: datetime, days):
         if days == 3:
+
             #If we are looks at 3 days the startdate and end date should be yesterday and tomorrow
 
             startDate = focus_date - timedelta(days=1)
@@ -58,8 +59,6 @@ class GoogleCalendar:
 
         organized_data = {}
         
-        # Initialize the dictionary with empty lists for the days in range
-
         current = startDate
         while current <= endDate:
             date_str = current.strftime("%Y-%m-%d")
@@ -77,4 +76,17 @@ class GoogleCalendar:
 
         return organized_data
 
-        
+if __name__ == "__main__":
+    gc = GoogleCalendar()
+    print('logged into google')
+    today = datetime.now()
+    print(f"Fetching 3-day view centered on: {today.date()}...")
+    data = gc.getCalendarSlots(today, days=3)
+    for date, events in data.items():
+        print(f"\n--- {date} ---")
+        if not events:
+            print("  (No events found)")
+        else:
+            for ev in events:
+                start_time = ev['start'][11:16] if not ev['is_all_day'] else "All Day"
+                print(f"  [{start_time}] {ev['title']}")
