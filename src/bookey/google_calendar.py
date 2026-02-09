@@ -103,22 +103,3 @@ class GoogleCalendar:
 
         return organized_data
 
-if __name__ == "__main__":
-    gc = GoogleCalendar()
-    print('logged into google')
-    today = datetime.now()
-    print(f"Fetching 3-day view centered on: {today.date()}...")
-    data = gc.getCalendarSlots(today, days=3)
-    for date, events in data.items():
-        print(f"\n--- {date} ---")
-        if not events:
-            print("  (No events found)")
-        else:
-            for ev in events:
-                start_time = ev['start'][11:16] if not ev['is_all_day'] else "All Day"
-                print(f"  [{start_time}] {ev['title']}")
-    print("\n--- INCOMPLETE TASKS ---")
-    tasks = gc.getTasks()
-    for t in tasks:
-        due_info = f" [Due: {t['due'][:10]}]" if t['due'] else ""
-        print(f"  - {t['title']}{due_info}")
