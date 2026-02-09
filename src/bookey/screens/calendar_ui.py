@@ -222,10 +222,13 @@ class CalendarScreen(Screen):
 
     BINDINGS = [
         Binding("escape", "go_back", "Back", priority=True),
+        Binding("left", "nav_prev", "Prev Day", priority=True),
+        Binding("right", "nav_next", "Next Day", priority=True),
         Binding("1", "view_1day", "1-Day", priority=True),
         Binding("3", "view_3day", "3-Day", priority=True),
         Binding("a", "add_item", "Add", priority=True),
         Binding("d", "delete_item", "Delete", priority=True),
+        Binding("t", "focus_tasks", "Tasks", priority=True),
     ]
 
     view_mode: reactive[int] = reactive(3)
@@ -255,7 +258,12 @@ class CalendarScreen(Screen):
 
     def compose(self) -> ComposeResult:
         mode_label = "3-Day View" if self.view_mode == 3 else "1-Day View"
-        date_label = self.focus_date.strftime("%b %d, %Y")
+        if self.view_mode == 3:
+            start = self.focus_date - timedelta(days=1)
+            end = self.focus_date + timedelta(days=1)
+            date_label = f"{start.strftime('%b %d')} - {end.strftime('%b %d, %Y')}"
+        else:
+            date_label = self.focus_date.strftime("%b %d, %Y")
         yield Static(f"  {mode_label}  \u2502  {date_label}", id="cal-header")
 
         with Horizontal(id="cal-body"):
@@ -268,14 +276,31 @@ class CalendarScreen(Screen):
             with Container(id="tasks-panel"):
                 yield Static(" Tasks", id="tasks-header")
                 with ScrollableContainer(id="tasks-list"):
-                    if self._current_tasks:
-                        for task in self._current_tasks:
+                    dated = [t for t in self._current_tasks if t["due"]]
+                    undated = [t for t in self._current_tasks if not t["due"]]
+
+                    current_date = None
+                    for task in dated:
+                        task_date = task["due"][:10]
+                        if task_date != current_date:
+                            current_date = task_date
+                            dt = datetime.strptime(task_date, "%Y-%m-%d")
+                            yield Static(
+                                f" {dt.strftime('%b %d')}",
+                                classes="task-date-header",
+                            )
+                        yield TaskItem(task)
+
+                    if undated:
+                        yield Static(" No Date", classes="task-date-header")
+                        for task in undated:
                             yield TaskItem(task)
-                    else:
+
+                    if not dated and not undated:
                         yield Static(" No tasks", classes="empty-list")
 
         yield Static(
-            " [a] Add  [d] Delete/Complete  [1] 1-Day  [3] 3-Day  [esc] Back",
+            " [\u2190/\u2192] Navigate  [a] Add  [d] Delete  [t] Tasks  [1] 1-Day  [3] 3-Day  [esc] Back",
             id="cal-footer",
         )
 
@@ -287,18 +312,32 @@ class CalendarScreen(Screen):
 
     def watch_view_mode(self, new_mode: int) -> None:
         if hasattr(self, "_calendar_data") and self._calendar_data:
-            self._load_data()
-            self.recompose()
-            self.call_after_refresh(self._scroll_to_now)
+            self._refresh_view()
+
+    def _refresh_view(self) -> None:
+        self._load_data()
+        self.recompose()
+        self.call_after_refresh(self._scroll_to_now)
 
     def action_go_back(self) -> None:
         self.app.pop_screen()
+
+    def action_nav_prev(self) -> None:
+        self.focus_date -= timedelta(days=1)
+        self._refresh_view()
+
+    def action_nav_next(self) -> None:
+        self.focus_date += timedelta(days=1)
+        self._refresh_view()
 
     def action_view_1day(self) -> None:
         self.view_mode = 1
 
     def action_view_3day(self) -> None:
         self.view_mode = 3
+
+    def action_focus_tasks(self) -> None:
+        self.query_one("#tasks-list").focus()
 
     def action_add_item(self) -> None:
         self.app.push_screen(AddModal(), callback=self._on_add_complete)
@@ -318,9 +357,7 @@ class CalendarScreen(Screen):
             self.gc.add_task(
                 result["title"], result.get("notes", ""), due
             )
-        self._load_data()
-        self.recompose()
-        self.call_after_refresh(self._scroll_to_now)
+        self._refresh_view()
 
     def action_delete_item(self) -> None:
         self.app.push_screen(
@@ -335,6 +372,4 @@ class CalendarScreen(Screen):
             self.gc.delete_calendar(result["id"])
         elif result["action"] == "complete_task":
             self.gc.complete_task(result["id"])
-        self._load_data()
-        self.recompose()
-        self.call_after_refresh(self._scroll_to_now)
+        self._refresh_view()

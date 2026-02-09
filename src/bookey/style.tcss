@@ -197,6 +197,14 @@ DayColumn {
     text-style: italic;
 }
 
+.task-date-header {
+    width: 100%;
+    height: 1;
+    color: #b4befe;
+    text-style: bold;
+    background: #313244;
+}
+
 /* ── Add Modal ── */
 
 AddModal {
