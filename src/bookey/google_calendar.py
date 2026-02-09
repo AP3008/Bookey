@@ -34,8 +34,8 @@ class GoogleCalendar:
         return {
             "id": task.get("id"),
             "title": task.get("title", "(No Title)"),
-            "notes": task.get("notes", ""),  # Helpful for the 'Framer' or 'AWS' notes you have
-            "due": task.get("due"),          # You might want to show this in the sidebar
+            "notes": task.get("notes", ""),  
+            "due": task.get("due"),         
             "status": task.get("status")
         }
     # Helper function to parse events
@@ -134,6 +134,3 @@ class GoogleCalendar:
             body=t_body
         ).execute()
 
-#if __name__ == '__main__':
-    #gc = GoogleCalendar() 
-    #print('logged in')
