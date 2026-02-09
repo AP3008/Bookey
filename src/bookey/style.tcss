@@ -1,26 +1,83 @@
-#logo {
-    color: $accent;
-    margin-bottom: 2;
+/* ── Catppuccin Mocha Palette ──
+ * Base:     #1e1e2e    Surface0: #313244
+ * Text:     #cdd6f4    Subtext0: #a6adc8
+ * Overlay0: #6c7086    Mauve:    #cba6f7
+ * Lavender: #b4befe    Red:      #f38ba8
+ */
+
+Screen {
+    background: #1e1e2e;
+}
+
+#main-card {
+    width: 64;
+    height: auto;
+    padding: 2 4;
+    background: #313244;
+    border: round #6c7086;
     content-align: center middle;
 }
 
-#welcome {
+#logo {
+    color: #cba6f7;
     text-align: center;
+    width: 100%;
+    margin-bottom: 1;
+}
+
+#tagline {
+    text-align: center;
+    color: #a6adc8;
+    width: 100%;
     margin-bottom: 2;
-    color: $text-muted;
 }
 
-#menu-options {
-    width: 40;
-    background: transparent;
-    border: double $primary;
+#buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+    content-align: center middle;
+    margin-bottom: 1;
 }
 
-ListItem {
-    padding: 1;
+#buttons Button {
+    margin: 0 1;
+    min-width: 16;
 }
 
-ListItem:hover {
-    background: $primary;
-    color: white;
+#btn-calendar {
+    background: #cba6f7;
+    color: #1e1e2e;
+}
+
+#btn-calendar:hover {
+    background: #b4befe;
+    color: #1e1e2e;
+}
+
+#btn-calendar:focus {
+    background: #b4befe;
+    color: #1e1e2e;
+}
+
+#btn-exit {
+    background: #45475a;
+    color: #cdd6f4;
+}
+
+#btn-exit:hover {
+    background: #585b70;
+    color: #cdd6f4;
+}
+
+#btn-exit:focus {
+    background: #585b70;
+    color: #cdd6f4;
+}
+
+#hint {
+    text-align: center;
+    color: #6c7086;
+    width: 100%;
+    text-style: italic;
 }
