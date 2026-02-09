@@ -221,32 +221,34 @@ class CalendarScreen(Screen):
     """The calendar interface with day view, tasks panel, and CRUD."""
 
     BINDINGS = [
-        Binding("escape", "go_back", "Back"),
-        Binding("1", "view_1day", "1-Day"),
-        Binding("3", "view_3day", "3-Day"),
-        Binding("a", "add_item", "Add"),
-        Binding("d", "delete_item", "Delete"),
+        Binding("escape", "go_back", "Back", priority=True),
+        Binding("1", "view_1day", "1-Day", priority=True),
+        Binding("3", "view_3day", "3-Day", priority=True),
+        Binding("a", "add_item", "Add", priority=True),
+        Binding("d", "delete_item", "Delete", priority=True),
     ]
 
     view_mode: reactive[int] = reactive(3)
 
-    def __init__(self):
+    def __init__(self, gc):
         super().__init__()
+        self.gc = gc
         self.focus_date: datetime = datetime.now().replace(
             hour=0, minute=0, second=0, microsecond=0
         )
         self._calendar_data: dict[str, list[dict]] = {}
         self._current_events: list[dict] = []
         self._current_tasks: list[dict] = []
-
-    def on_mount(self) -> None:
         self._load_data()
 
+    def on_mount(self) -> None:
+        self.call_after_refresh(self._scroll_to_now)
+
     def _load_data(self) -> None:
-        self._calendar_data = self.app.gc.getCalendarSlots(
+        self._calendar_data = self.gc.getCalendarSlots(
             self.focus_date, self.view_mode
         )
-        self._current_tasks = self.app.gc.getTasks()
+        self._current_tasks = self.gc.getTasks()
         self._current_events = []
         for day_events in self._calendar_data.values():
             self._current_events.extend(day_events)
@@ -308,12 +310,12 @@ class CalendarScreen(Screen):
             date_str = self.focus_date.strftime("%Y-%m-%d")
             start_iso = f"{date_str}T{result['start']}:00"
             end_iso = f"{date_str}T{result['end']}:00"
-            self.app.gc.add_calendar(
+            self.gc.add_calendar(
                 result["title"], start_iso, end_iso, result.get("details", "")
             )
         elif result["type"] == "task":
             due = result.get("due") or None
-            self.app.gc.add_task(
+            self.gc.add_task(
                 result["title"], result.get("notes", ""), due
             )
         self._load_data()
@@ -330,9 +332,9 @@ class CalendarScreen(Screen):
         if result is None:
             return
         if result["action"] == "delete_event":
-            self.app.gc.delete_calendar(result["id"])
+            self.gc.delete_calendar(result["id"])
         elif result["action"] == "complete_task":
-            self.app.gc.complete_task(result["id"])
+            self.gc.complete_task(result["id"])
         self._load_data()
         self.recompose()
         self.call_after_refresh(self._scroll_to_now)

@@ -50,4 +50,4 @@ class MainMenu(Screen):
         self.app.exit()
 
     def action_calendar(self):
-        self.app.push_screen(CalendarScreen())
+        self.app.push_screen(CalendarScreen(self.app.gc))
