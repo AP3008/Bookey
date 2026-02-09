@@ -126,6 +126,11 @@ DayColumn {
     text-style: bold;
 }
 
+.day-header.today {
+    color: #cba6f7;
+    background: #45475a;
+}
+
 .all-day-bar {
     width: 100%;
     height: 1;

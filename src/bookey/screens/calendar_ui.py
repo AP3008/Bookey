@@ -55,10 +55,12 @@ class DayColumn(Widget):
         dt = datetime.strptime(self.date_str, "%Y-%m-%d")
         label = dt.strftime("%a %b %d").upper()
         today = datetime.now().strftime("%Y-%m-%d")
+        header_classes = "day-header"
         if self.date_str == today:
             label += "  (TODAY)"
+            header_classes += " today"
 
-        yield Static(label, classes="day-header")
+        yield Static(label, classes=header_classes)
 
         all_day = [e for e in self.events if e["is_all_day"]]
         if all_day:
