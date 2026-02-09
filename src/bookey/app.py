@@ -18,6 +18,7 @@ def main():
     parser = argparse.ArgumentParser(description="Bookey - Your calendar, in the terminal.")
     parser.add_argument("-a", action="store_true", help="Add an event or task")
     parser.add_argument("-d", action="store_true", help="Delete event or complete task")
+    parser.add_argument("-l", action="store_true", help="List events or tasks")
     args = parser.parse_args()
 
     if args.a:
@@ -28,6 +29,10 @@ def main():
         from bookey.cli import cli_delete
         gc = GoogleCalendar()
         cli_delete(gc)
+    elif args.l:
+        from bookey.cli import cli_list
+        gc = GoogleCalendar()
+        cli_list(gc)
     else:
         app = BookeyApp()
         app.run()

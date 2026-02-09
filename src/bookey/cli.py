@@ -15,23 +15,30 @@ DIM = "\033[38;2;108;112;134m"
 TEXT = "\033[38;2;205;214;244m"
 BOLD = "\033[1m"
 RESET = "\033[0m"
+CLEAR_LINE = "\033[K"
+HIDE_CURSOR = "\033[?25l"
+SHOW_CURSOR = "\033[?25h"
 
 
 def select_option(prompt, options):
     """Arrow-key interactive selector. Returns chosen index."""
-    print(f"\n{MAUVE}?{RESET} {BOLD}{prompt}{RESET}")
+    sys.stdout.write(f"\n{MAUVE}?{RESET} {BOLD}{prompt}{RESET}\n")
+    sys.stdout.flush()
     selected = 0
     count = len(options)
 
     def render():
         for i, opt in enumerate(options):
             if i == selected:
-                print(f"\033[K  {MAUVE}❯ {i + 1}. {opt}{RESET}")
+                sys.stdout.write(f"{CLEAR_LINE}  {MAUVE}> {i + 1}. {opt}{RESET}\n")
             else:
-                print(f"\033[K    {DIM}{i + 1}. {opt}{RESET}")
+                sys.stdout.write(f"{CLEAR_LINE}    {DIM}{i + 1}. {opt}{RESET}\n")
+        sys.stdout.flush()
 
     fd = sys.stdin.fileno()
     old = termios.tcgetattr(fd)
+    sys.stdout.write(HIDE_CURSOR)
+    sys.stdout.flush()
     render()
     try:
         tty.setraw(fd)
@@ -53,15 +60,25 @@ def select_option(prompt, options):
                     break
             elif ch == "\x03":  # Ctrl+C
                 termios.tcsetattr(fd, termios.TCSADRAIN, old)
-                print(f"\n{RESET}")
+                sys.stdout.write(f"{SHOW_CURSOR}\n{RESET}")
+                sys.stdout.flush()
                 sys.exit(0)
-            # Redraw
+            # Move cursor up to redraw in place
             sys.stdout.write(f"\033[{count}A")
             sys.stdout.flush()
             render()
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old)
-    print()
+        sys.stdout.write(SHOW_CURSOR)
+        sys.stdout.flush()
+
+    # Clear the options list and print only the chosen one
+    sys.stdout.write(f"\033[{count}A")
+    for _ in range(count):
+        sys.stdout.write(f"{CLEAR_LINE}\n")
+    sys.stdout.write(f"\033[{count}A")
+    sys.stdout.write(f"{CLEAR_LINE}  {MAUVE}{selected + 1}. {options[selected]}{RESET}\n")
+    sys.stdout.flush()
     return selected
 
 
@@ -88,8 +105,9 @@ def cli_add(gc):
 
 
 def _add_event(gc):
+    today_str = datetime.now().strftime("%d/%m/%Y")
     name = ask("Name")
-    date_str = ask("Date (dd/mm/yyyy)")
+    date_str = ask(f"[{today_str}] Date (dd/mm/yyyy)")
     time_str = ask("Start time (hh:mm, or 'a' for all day)")
     is_all_day = time_str.lower() == "a"
 
@@ -97,7 +115,6 @@ def _add_event(gc):
         end_str = ask("End time (hh:mm)")
     desc = ask("Description", required=False)
 
-    # Parse date
     try:
         dt = datetime.strptime(date_str, "%d/%m/%Y")
     except ValueError:
@@ -107,19 +124,21 @@ def _add_event(gc):
     date_iso = dt.strftime("%Y-%m-%d")
 
     if is_all_day:
-        # All-day events use date-only format
         gc.add_calendar(name, date_iso, date_iso, desc or "")
-        print(f"\n  {GREEN}✓{RESET} Event {BOLD}\"{name}\"{RESET} added for {dt.strftime('%b %d, %Y')} (all day)")
+        print(f"\n  Event \"{name}\" added for {dt.strftime('%b %d, %Y')} (all day)")
     else:
         start_iso = f"{date_iso}T{time_str}:00"
         end_iso = f"{date_iso}T{end_str}:00"
         gc.add_calendar(name, start_iso, end_iso, desc or "")
-        print(f"\n  {GREEN}✓{RESET} Event {BOLD}\"{name}\"{RESET} added for {dt.strftime('%b %d, %Y')} {time_str}-{end_str}")
+        print(f"\n  Event \"{name}\" added for {dt.strftime('%b %d, %Y')} {time_str}-{end_str}")
 
 
 def _add_task(gc):
+    today_str = datetime.now().strftime("%d/%m/%Y")
     name = ask("Name")
-    date_str = ask("Date (dd/mm/yyyy)", required=False, hint="[enter to skip]")
+    date_str = ask(
+        f"[{today_str}] Date (dd/mm/yyyy)", required=False, hint="[enter to skip]"
+    )
     desc = ask("Description", required=False)
 
     due = None
@@ -134,9 +153,9 @@ def _add_task(gc):
     gc.add_task(name, desc or "", due)
 
     if due:
-        print(f"\n  {GREEN}✓{RESET} Task {BOLD}\"{name}\"{RESET} added for {dt.strftime('%b %d, %Y')}")
+        print(f"\n  Task \"{name}\" added for {dt.strftime('%b %d, %Y')}")
     else:
-        print(f"\n  {GREEN}✓{RESET} Task {BOLD}\"{name}\"{RESET} added")
+        print(f"\n  Task \"{name}\" added")
 
 
 # ── Delete Flow ─────────────────────────────────────────────────
@@ -154,7 +173,6 @@ def cli_delete(gc):
 
 
 def _delete_event(gc):
-    # Fetch events for the next 7 days
     today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     all_events = []
     for i in range(7):
@@ -169,7 +187,6 @@ def _delete_event(gc):
         print(f"\n  {DIM}No events in the next 7 days.{RESET}")
         return
 
-    print(f"\n  {LAVENDER}Events for the next 7 days:{RESET}")
     labels = []
     for event in all_events:
         dt = datetime.strptime(event["_date_str"], "%Y-%m-%d")
@@ -183,7 +200,7 @@ def _delete_event(gc):
     idx = select_option("Select event to delete:", labels)
     event = all_events[idx]
     gc.delete_calendar(event["id"])
-    print(f"  {GREEN}✓{RESET} Deleted {BOLD}\"{event['title']}\"{RESET}")
+    print(f"  Event \"{event['title']}\" deleted")
 
 
 def _complete_task(gc):
@@ -193,7 +210,6 @@ def _complete_task(gc):
         print(f"\n  {DIM}No tasks to complete.{RESET}")
         return
 
-    print(f"\n  {LAVENDER}Your tasks:{RESET}")
     labels = []
     for task in tasks:
         if task["due"]:
@@ -205,4 +221,61 @@ def _complete_task(gc):
     idx = select_option("Select task to complete:", labels)
     task = tasks[idx]
     gc.complete_task(task["id"])
-    print(f"  {GREEN}✓{RESET} Completed {BOLD}\"{task['title']}\"{RESET}")
+    print(f"  Task \"{task['title']}\" completed")
+
+
+# ── List Flow ───────────────────────────────────────────────────
+
+
+def cli_list(gc):
+    choice = select_option("What would you like to list?", ["Events", "Tasks"])
+
+    if choice == 0:
+        _list_events(gc)
+    else:
+        _list_tasks(gc)
+
+
+def _list_events(gc):
+    today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    all_events = []
+    for i in range(7):
+        day = today + timedelta(days=i)
+        slots = gc.getCalendarSlots(day, 1)
+        for date_str, events in slots.items():
+            for event in events:
+                event["_date_str"] = date_str
+                all_events.append(event)
+
+    if not all_events:
+        print(f"\n  {DIM}No events in the next 7 days.{RESET}")
+        return
+
+    print(f"\n  {LAVENDER}{BOLD}Events (next 7 days){RESET}\n")
+    for event in all_events:
+        dt = datetime.strptime(event["_date_str"], "%Y-%m-%d")
+        day_label = dt.strftime("%a, %b %d")
+        if event["is_all_day"]:
+            time_label = "All Day"
+        else:
+            time_label = event["start"][11:16] if len(event["start"]) > 11 else ""
+        print(f"  {TEXT}{day_label}  |  {event['title']}  |  {time_label}{RESET}")
+    print()
+
+
+def _list_tasks(gc):
+    tasks = gc.getTasks()
+
+    if not tasks:
+        print(f"\n  {DIM}No incomplete tasks.{RESET}")
+        return
+
+    print(f"\n  {LAVENDER}{BOLD}Tasks (incomplete){RESET}\n")
+    for task in tasks:
+        if task["due"]:
+            dt = datetime.strptime(task["due"][:10], "%Y-%m-%d")
+            date_label = dt.strftime("%b %d")
+            print(f"  {TEXT}{date_label}  |  {task['title']}{RESET}")
+        else:
+            print(f"  {TEXT}{task['title']}{RESET}")
+    print()
