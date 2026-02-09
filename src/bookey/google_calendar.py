@@ -103,13 +103,21 @@ class GoogleCalendar:
 
         return organized_data
 
-    def add_calendar(self, summary, start_time, end_time, description=""):
-        event = {
-        'summary': summary,
-        'description': description,
-        'start': {'dateTime': start_time, 'timeZone': 'America/Toronto'},
-        'end': {'dateTime': end_time, 'timeZone': 'America/Toronto'},
-        }
+    def add_calendar(self, summary, start_time, end_time, description="", all_day=False):
+        if all_day:
+            event = {
+                'summary': summary,
+                'description': description,
+                'start': {'date': start_time},
+                'end': {'date': end_time},
+            }
+        else:
+            event = {
+                'summary': summary,
+                'description': description,
+                'start': {'dateTime': start_time, 'timeZone': 'America/Toronto'},
+                'end': {'dateTime': end_time, 'timeZone': 'America/Toronto'},
+            }
         return self.calendar.events().insert(calendarId="primary", body=event).execute()
 
     def delete_calendar(self, eventID):

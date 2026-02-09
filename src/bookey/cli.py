@@ -124,7 +124,8 @@ def _add_event(gc):
     date_iso = dt.strftime("%Y-%m-%d")
 
     if is_all_day:
-        gc.add_calendar(name, date_iso, date_iso, desc or "")
+        end_date = (dt + timedelta(days=1)).strftime("%Y-%m-%d")
+        gc.add_calendar(name, date_iso, end_date, desc or "", all_day=True)
         print(f"\n  Event \"{name}\" added for {dt.strftime('%b %d, %Y')} (all day)")
     else:
         start_iso = f"{date_iso}T{time_str}:00"
