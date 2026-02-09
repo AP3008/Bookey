@@ -67,12 +67,12 @@ Screen {
 
 #btn-exit:hover {
     background: #b4befe;
-    color: #cdd6f4;
+    color: #1e1e2e;
 }
 
 #btn-exit:focus {
     background: #b4befe;
-	color: #cdd6f4;
+	color: #1e1e2e;
 }
 
 #hint {
