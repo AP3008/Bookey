@@ -1,6 +1,7 @@
 import sys
 import tty
 import termios
+import select
 from datetime import datetime, timedelta
 
 
@@ -18,6 +19,20 @@ RESET = "\033[0m"
 CLEAR_LINE = "\033[K"
 HIDE_CURSOR = "\033[?25l"
 SHOW_CURSOR = "\033[?25h"
+
+
+def _cleanup_and_exit(fd, old, count):
+    """Restore terminal, clear selector lines, and exit."""
+    termios.tcsetattr(fd, termios.TCSADRAIN, old)
+    # Clear the option lines
+    sys.stdout.write(f"\033[{count}A")
+    for _ in range(count):
+        sys.stdout.write(f"{CLEAR_LINE}\n")
+    sys.stdout.write(f"\033[{count}A")
+    sys.stdout.write(f"{CLEAR_LINE}  {DIM}Cancelled{RESET}\n")
+    sys.stdout.write(f"{SHOW_CURSOR}{RESET}")
+    sys.stdout.flush()
+    sys.exit(0)
 
 
 def select_option(prompt, options):
@@ -48,22 +63,24 @@ def select_option(prompt, options):
             if ch == "\r":
                 break
             elif ch == "\x1b":
-                sys.stdin.read(1)  # skip [
-                arrow = sys.stdin.read(1)
-                if arrow == "A" and selected > 0:
-                    selected -= 1
-                elif arrow == "B" and selected < count - 1:
-                    selected += 1
+                # Check if more bytes follow (arrow key) or bare escape
+                if select.select([sys.stdin], [], [], 0.05)[0]:
+                    sys.stdin.read(1)  # skip [
+                    arrow = sys.stdin.read(1)
+                    if arrow == "A" and selected > 0:
+                        selected -= 1
+                    elif arrow == "B" and selected < count - 1:
+                        selected += 1
+                else:
+                    # Bare escape — exit
+                    _cleanup_and_exit(fd, old, count)
             elif ch.isdigit():
                 idx = int(ch) - 1
                 if 0 <= idx < count:
                     selected = idx
                     break
             elif ch == "\x03":  # Ctrl+C
-                termios.tcsetattr(fd, termios.TCSADRAIN, old)
-                sys.stdout.write(f"\r{SHOW_CURSOR}\r\n{RESET}")
-                sys.stdout.flush()
-                sys.exit(0)
+                _cleanup_and_exit(fd, old, count)
             # Move cursor up to redraw in place
             sys.stdout.write(f"\033[{count}A")
             render()
@@ -86,7 +103,11 @@ def ask(prompt, required=True, hint=""):
     """Simple input prompt with Catppuccin styling."""
     suffix = f" {DIM}{hint}{RESET}" if hint else ""
     while True:
-        val = input(f"{MAUVE}?{RESET} {BOLD}{prompt}{RESET}{suffix}: ")
+        try:
+            val = input(f"{MAUVE}?{RESET} {BOLD}{prompt}{RESET}{suffix}: ")
+        except (KeyboardInterrupt, EOFError):
+            print(f"\n  {DIM}Cancelled{RESET}")
+            sys.exit(0)
         if val or not required:
             return val
         print(f"  {RED}This field is required.{RESET}")
