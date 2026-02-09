@@ -81,3 +81,253 @@ Screen {
     width: 100%;
     text-style: italic;
 }
+
+/* ── Calendar Screen ── */
+
+#cal-header {
+    width: 100%;
+    height: 1;
+    background: #313244;
+    color: #cba6f7;
+    text-style: bold;
+}
+
+#cal-footer {
+    dock: bottom;
+    width: 100%;
+    height: 1;
+    background: #313244;
+    color: #6c7086;
+    text-style: italic;
+}
+
+#cal-body {
+    width: 100%;
+    height: 1fr;
+}
+
+#day-columns {
+    width: 3fr;
+    height: 100%;
+}
+
+DayColumn {
+    width: 1fr;
+    height: 100%;
+    border-right: solid #6c7086;
+}
+
+.day-header {
+    width: 100%;
+    height: 1;
+    background: #313244;
+    color: #b4befe;
+    text-align: center;
+    text-style: bold;
+}
+
+.all-day-bar {
+    width: 100%;
+    height: 1;
+    background: #45475a;
+    color: #cba6f7;
+}
+
+.time-grid {
+    width: 100%;
+    height: 1fr;
+}
+
+.time-slot {
+    width: 100%;
+    height: 1;
+    color: #6c7086;
+}
+
+.time-slot.occupied {
+    background: #45475a;
+    color: #cdd6f4;
+}
+
+.time-slot.event-start {
+    background: #45475a;
+    color: #cba6f7;
+    text-style: bold;
+}
+
+.time-slot.event-cont {
+    background: #45475a;
+    color: #a6adc8;
+}
+
+/* ── Tasks Panel ── */
+
+#tasks-panel {
+    width: 1fr;
+    height: 100%;
+    border-left: solid #6c7086;
+}
+
+#tasks-header {
+    width: 100%;
+    height: 1;
+    background: #313244;
+    color: #b4befe;
+    text-style: bold;
+}
+
+#tasks-list {
+    width: 100%;
+    height: 1fr;
+}
+
+.task-item {
+    width: 100%;
+    height: 1;
+    color: #cdd6f4;
+    border-bottom: solid #313244;
+}
+
+.task-item:hover {
+    background: #45475a;
+}
+
+.empty-list {
+    color: #6c7086;
+    text-style: italic;
+}
+
+/* ── Add Modal ── */
+
+AddModal {
+    align: center middle;
+}
+
+#add-modal-card {
+    width: 50;
+    height: auto;
+    max-height: 80%;
+    background: #313244;
+    border: round #6c7086;
+    padding: 1 2;
+}
+
+#add-modal-title {
+    width: 100%;
+    text-align: center;
+    color: #cba6f7;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+#add-type-select {
+    width: 100%;
+    margin-bottom: 1;
+}
+
+#event-fields, #task-fields {
+    width: 100%;
+    height: auto;
+}
+
+#task-fields {
+    display: none;
+}
+
+#add-modal-card Input {
+    margin-bottom: 1;
+}
+
+#add-modal-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+    margin-top: 1;
+}
+
+#add-modal-buttons Button {
+    margin: 0 1;
+    min-width: 12;
+}
+
+#btn-add-save {
+    background: #cba6f7;
+    color: #1e1e2e;
+}
+
+#btn-add-save:hover {
+    background: #b4befe;
+    color: #1e1e2e;
+}
+
+#btn-add-save:focus {
+    background: #b4befe;
+    color: #1e1e2e;
+}
+
+#btn-add-cancel {
+    background: #45475a;
+    color: #cdd6f4;
+}
+
+#btn-add-cancel:hover {
+    background: #585b70;
+    color: #cdd6f4;
+}
+
+/* ── Delete Modal ── */
+
+DeleteModal {
+    align: center middle;
+}
+
+#delete-modal-card {
+    width: 60;
+    height: auto;
+    max-height: 70%;
+    background: #313244;
+    border: round #6c7086;
+    padding: 1 2;
+}
+
+#delete-modal-title {
+    width: 100%;
+    text-align: center;
+    color: #f38ba8;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+#delete-list {
+    width: 100%;
+    max-height: 15;
+}
+
+.delete-item-btn {
+    width: 100%;
+    margin-bottom: 0;
+    background: #45475a;
+    color: #cdd6f4;
+}
+
+.delete-item-btn:hover {
+    background: #f38ba8;
+    color: #1e1e2e;
+}
+
+.delete-item-btn:focus {
+    background: #f38ba8;
+    color: #1e1e2e;
+}
+
+#btn-delete-cancel {
+    margin-top: 1;
+    width: 100%;
+    background: #45475a;
+    color: #cdd6f4;
+}
+
+#btn-delete-cancel:hover {
+    background: #585b70;
+    color: #cdd6f4;
+}
