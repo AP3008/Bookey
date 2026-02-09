@@ -123,12 +123,14 @@ class GoogleCalendar:
         }
         if due:
             t_body['due'] = due
-        return self.task.tasks().insert(tasklist='@default', t_body=body).execute()
+        return self.task.tasks().insert(tasklist='@default', body=t_body).execute()
 
 
-#if __name__ == '__main__':
-    #gc = GoogleCalendar() 
-    #print('logged in')
+if __name__ == '__main__':
+    gc = GoogleCalendar() 
+    print('logged in')
+
+    
     #event = gc.add_calendar("Test Event from Bookey", "2026-02-09T10:00:00Z", "2026-02-09T11:00:00Z","This is a test task")
     #eventID = event.get('id')
     #print(f"the new id: {eventID}")
