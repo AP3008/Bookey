@@ -116,7 +116,6 @@ class GoogleCalendar:
         return self.calendar.events().delete(calendarId='primary', eventId=eventID).execute()
 
     def add_task(self, title, notes, due=None):
-        
         t_body = {
             'title': title,
             'notes': notes
@@ -125,17 +124,16 @@ class GoogleCalendar:
             t_body['due'] = due
         return self.task.tasks().insert(tasklist='@default', body=t_body).execute()
 
+    def complete_task(self, taskID):
+        t_body = {
+            'status': 'completed'
+        }
+        return self.task.tasks().patch(
+            tasklist='@default',
+            task=taskID,
+            body=t_body
+        ).execute()
 
-if __name__ == '__main__':
-    gc = GoogleCalendar() 
-    print('logged in')
-
-    
-    #event = gc.add_calendar("Test Event from Bookey", "2026-02-09T10:00:00Z", "2026-02-09T11:00:00Z","This is a test task")
-    #eventID = event.get('id')
-    #print(f"the new id: {eventID}")
+#if __name__ == '__main__':
+    #gc = GoogleCalendar() 
     #print('logged in')
-    #print(f"ID to delete: 5p4hd2sqspfv7akhnnaq7tj7f8")
-    #gc.delete_calendar('5p4hd2sqspfv7akhnnaq7tj7f8')
-    #print('Deleted')
-    
