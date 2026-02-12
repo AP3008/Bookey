@@ -1,17 +1,59 @@
+import os
 import argparse
 
-from textual.app import App
 from bookey.google_calendar import GoogleCalendar
-from bookey.screens.main_menu import MainMenu
+from bookey.auth import TOKEN_PATH
+from bookey.cli import select_option, cli_add, cli_delete, cli_list, MAUVE, GREEN, RED, BOLD, RESET, DIM
 
 
-class BookeyApp(App):
-    CSS_PATH = "style.tcss"
-    TITLE = "Bookey"
+LOGO = f"""{MAUVE}{BOLD}
+  ____              _
+ | __ )  ___   ___ | | _____ _   _
+ |  _ \\ / _ \\ / _ \\| |/ / _ \\ | | |
+ | |_) | (_) | (_) |   <  __/ |_| |
+ |____/ \\___/ \\___/|_|\\_\\___|\\__, |
+                             |___/
+{RESET}{DIM}  Your calendar, in the terminal.{RESET}
+"""
 
-    def on_mount(self) -> None:
-        self.gc = GoogleCalendar()
-        self.push_screen(MainMenu())
+
+def change_login():
+    if os.path.exists(TOKEN_PATH):
+        os.remove(TOKEN_PATH)
+        print(f"  {GREEN}Logged out. Logging in with new account...{RESET}\n")
+    else:
+        print(f"  {DIM}No existing login found. Logging in...{RESET}\n")
+    GoogleCalendar()
+    print(f"\n  {GREEN}Login successful!{RESET}")
+
+
+def main_menu():
+    print(LOGO)
+    gc = GoogleCalendar()
+
+    while True:
+        choice = select_option("What would you like to do?", [
+            "Add event or task",
+            "Delete event / complete task",
+            "List events or tasks",
+            "Change login",
+            "Exit",
+        ])
+
+        if choice == 0:
+            cli_add(gc)
+        elif choice == 1:
+            cli_delete(gc)
+        elif choice == 2:
+            cli_list(gc)
+        elif choice == 3:
+            change_login()
+            gc = GoogleCalendar()
+        elif choice == 4:
+            print(f"\n  {DIM}Goodbye!{RESET}\n")
+            break
+
+        print()
 
 
 def main():
@@ -19,23 +61,22 @@ def main():
     parser.add_argument("-a", action="store_true", help="Add an event or task")
     parser.add_argument("-d", action="store_true", help="Delete event or complete task")
     parser.add_argument("-l", action="store_true", help="List events or tasks")
+    parser.add_argument("--change-login", action="store_true", help="Switch Google account")
     args = parser.parse_args()
 
     if args.a:
-        from bookey.cli import cli_add
         gc = GoogleCalendar()
         cli_add(gc)
     elif args.d:
-        from bookey.cli import cli_delete
         gc = GoogleCalendar()
         cli_delete(gc)
     elif args.l:
-        from bookey.cli import cli_list
         gc = GoogleCalendar()
         cli_list(gc)
+    elif args.change_login:
+        change_login()
     else:
-        app = BookeyApp()
-        app.run()
+        main_menu()
 
 
 if __name__ == "__main__":

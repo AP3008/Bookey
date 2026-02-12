@@ -1,14 +1,13 @@
 [project]
 name = "bookey"
 version = "0.1.0"
-description = "A TUI for Google Calendar and Tasks"
+description = "A CLI for Google Calendar and Tasks"
 readme = "README.md"
 requires-python = ">=3.10"
 
 # dependencies that we need for the project
 
 dependencies = [
-    "textual>=0.47.0",
     "google-api-python-client",
     "google-auth-httplib2",
     "google-auth-oauthlib",
@@ -16,7 +15,7 @@ dependencies = [
 
 [project.scripts]
 
-# makes the bk command work to run the TUI
+# makes the bk command work to run the CLI
 
 bk = "bookey.app:main"
 
