@@ -82,6 +82,83 @@ def select_option(prompt, options):
     return selected
 
 
+def select_multiple(prompt, options, selectable=None):
+    """Arrow-key multi-select with checkboxes. Space to toggle, Enter to confirm.
+    Returns list of selected indices. `selectable` is a list of bools indicating
+    which options can be toggled (headers are not selectable)."""
+    if selectable is None:
+        selectable = [True] * len(options)
+
+    sys.stdout.write(f"\n{MAUVE}?{RESET} {BOLD}{prompt}{RESET} {DIM}(space = toggle, enter = confirm){RESET}\n")
+    sys.stdout.flush()
+    cursor = 0
+    checked = set()
+    count = len(options)
+
+    fd = sys.stdin.fileno()
+    old = termios.tcgetattr(fd)
+
+    def render():
+        for i, opt in enumerate(options):
+            if selectable[i]:
+                box = f"{GREEN}[x]{RESET}" if i in checked else f"{DIM}[ ]{RESET}"
+            else:
+                box = "   "
+            if i == cursor:
+                sys.stdout.write(f"\r{CLEAR_LINE}  {MAUVE}>{RESET} {box} {MAUVE}{opt}{RESET}\r\n")
+            else:
+                sys.stdout.write(f"\r{CLEAR_LINE}    {box} {DIM}{opt}{RESET}\r\n")
+        sys.stdout.flush()
+
+    sys.stdout.write(HIDE_CURSOR)
+    sys.stdout.flush()
+    try:
+        tty.setraw(fd)
+        render()
+        while True:
+            ch = sys.stdin.read(1)
+            if ch == "\r":
+                break
+            elif ch == " ":
+                if selectable[cursor]:
+                    if cursor in checked:
+                        checked.discard(cursor)
+                    else:
+                        checked.add(cursor)
+            elif ch == "\x1b":
+                sys.stdin.read(1)  # skip [
+                arrow = sys.stdin.read(1)
+                if arrow == "A" and cursor > 0:
+                    cursor -= 1
+                elif arrow == "B" and cursor < count - 1:
+                    cursor += 1
+            elif ch == "\x03":  # Ctrl+C
+                termios.tcsetattr(fd, termios.TCSADRAIN, old)
+                sys.stdout.write(f"\r{SHOW_CURSOR}\r\n{RESET}")
+                sys.stdout.flush()
+                sys.exit(0)
+            sys.stdout.write(f"\033[{count}A")
+            render()
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old)
+        sys.stdout.write(SHOW_CURSOR)
+        sys.stdout.flush()
+
+    # Clear the options and show selected ones
+    sys.stdout.write(f"\033[{count}A")
+    for _ in range(count):
+        sys.stdout.write(f"{CLEAR_LINE}\n")
+    sys.stdout.write(f"\033[{count}A")
+    selected_labels = [options[i] for i in sorted(checked)]
+    if selected_labels:
+        for label in selected_labels:
+            sys.stdout.write(f"{CLEAR_LINE}  {GREEN}[x]{RESET} {MAUVE}{label}{RESET}\n")
+    else:
+        sys.stdout.write(f"{CLEAR_LINE}  {DIM}No items selected{RESET}\n")
+    sys.stdout.flush()
+    return sorted(checked)
+
+
 def ask(prompt, required=True, hint=""):
     """Simple input prompt with Catppuccin styling."""
     suffix = f" {DIM}{hint}{RESET}" if hint else ""
@@ -224,16 +301,18 @@ def _delete_event(gc):
             start_time = event["start"][11:16] if len(event["start"]) > 11 else ""
             labels.append(f"{day_label} | {event['title']} ({start_time})")
 
-    labels.append("Exit")
-    idx = select_option("Select event to delete:", labels)
-    if idx == len(all_events):
-        sys.exit(0)
-    event = all_events[idx]
-    try:
-        gc.delete_calendar(event["id"])
-        print(f"  {GREEN}Event \"{event['title']}\" deleted{RESET}")
-    except Exception as e:
-        print(f"  {RED}Failed to delete event: {e}{RESET}")
+    selected = select_multiple("Select events to delete:", labels)
+    if not selected:
+        print(f"  {DIM}No events selected.{RESET}")
+        return
+
+    for idx in selected:
+        event = all_events[idx]
+        try:
+            gc.delete_calendar(event["id"])
+            print(f"  {GREEN}Event \"{event['title']}\" deleted{RESET}")
+        except Exception as e:
+            print(f"  {RED}Failed to delete \"{event['title']}\": {e}{RESET}")
 
 
 def _complete_task(gc):
@@ -250,31 +329,45 @@ def _complete_task(gc):
     today = datetime.now().strftime("%Y-%m-%d")
     overdue = [t for t in tasks if t["due"] and t["due"][:10] < today]
     current = [t for t in tasks if not t["due"] or t["due"][:10] >= today]
-    ordered = overdue + current
-
     labels = []
-    for i, task in enumerate(ordered):
-        prefix = ""
-        if i == 0 and overdue:
-            prefix = f"{RED}[Overdue]{RESET} "
-        elif i == len(overdue) and current:
-            prefix = f"{GREEN}[Current]{RESET} "
-        if task["due"]:
-            dt = datetime.strptime(task["due"][:10], "%Y-%m-%d")
-            labels.append(f"{prefix}{dt.strftime('%b %d')} | {task['title']}")
-        else:
-            labels.append(f"{prefix}{task['title']}")
+    task_indices = []
+    selectable = []
 
-    labels.append("Exit")
-    idx = select_option("Select task to complete:", labels)
-    if idx == len(ordered):
-        sys.exit(0)
-    task = ordered[idx]
-    try:
-        gc.complete_task(task["id"])
-        print(f"  {GREEN}Task \"{task['title']}\" completed{RESET}")
-    except Exception as e:
-        print(f"  {RED}Failed to complete task: {e}{RESET}")
+    if overdue:
+        labels.append(f"{RED}── Overdue ──{RESET}")
+        task_indices.append(None)
+        selectable.append(False)
+        for task in overdue:
+            dt = datetime.strptime(task["due"][:10], "%Y-%m-%d")
+            labels.append(f"{dt.strftime('%b %d')} | {task['title']}")
+            task_indices.append(task)
+            selectable.append(True)
+
+    if current:
+        labels.append(f"{GREEN}── Current ──{RESET}")
+        task_indices.append(None)
+        selectable.append(False)
+        for task in current:
+            if task["due"]:
+                dt = datetime.strptime(task["due"][:10], "%Y-%m-%d")
+                labels.append(f"{dt.strftime('%b %d')} | {task['title']}")
+            else:
+                labels.append(task["title"])
+            task_indices.append(task)
+            selectable.append(True)
+
+    selected = select_multiple("Select tasks to complete:", labels, selectable)
+    if not selected:
+        print(f"  {DIM}No tasks selected.{RESET}")
+        return
+
+    for idx in selected:
+        task = task_indices[idx]
+        try:
+            gc.complete_task(task["id"])
+            print(f"  {GREEN}Task \"{task['title']}\" completed{RESET}")
+        except Exception as e:
+            print(f"  {RED}Failed to complete \"{task['title']}\": {e}{RESET}")
 
 
 # ── List Flow ───────────────────────────────────────────────────
