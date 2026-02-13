@@ -2,6 +2,7 @@
 venv
 __pycache__
 build/
+.DS_Store
 
 #Google Cloud Console Secrets
 credentials.json
