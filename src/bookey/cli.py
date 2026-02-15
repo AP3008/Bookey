@@ -39,6 +39,9 @@ def select_option(prompt, options):
         sys.stdout.flush()
 
     sys.stdout.write(HIDE_CURSOR)
+    # Reserve space so cursor-up always works even at terminal bottom
+    sys.stdout.write("\n" * count)
+    sys.stdout.write(f"\033[{count}A")
     sys.stdout.flush()
     try:
         tty.setraw(fd)
@@ -111,6 +114,9 @@ def select_multiple(prompt, options, selectable=None):
         sys.stdout.flush()
 
     sys.stdout.write(HIDE_CURSOR)
+    # Reserve space so cursor-up always works even at terminal bottom
+    sys.stdout.write("\n" * count)
+    sys.stdout.write(f"\033[{count}A")
     sys.stdout.flush()
     try:
         tty.setraw(fd)

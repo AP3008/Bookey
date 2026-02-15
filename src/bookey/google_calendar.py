@@ -2,16 +2,16 @@ from datetime import datetime, timedelta, timezone
 from googleapiclient.discovery import build
 from bookey.auth import login
 
+
 class GoogleCalendar:
     def __init__(self):
         self.creds = login()
 
-        #Creating objects for the calendars and tasks
+        # Creating objects for the calendars and tasks
 
         self.calendar = build('calendar', 'v3', credentials=self.creds)
         self.task = build('tasks', 'v1', credentials=self.creds)
 
-    
     def getTasks(self):
 
         # Fetching raw tasks
@@ -20,22 +20,22 @@ class GoogleCalendar:
             tasklist='@default',
             showCompleted=False
         ).execute()
-        
+
         raw_tasks = results.get('items', [])
-        
+
         # cleaned up version of the tasks being returned using list comprehension
 
         cleanTasks = [self._parse_task(t) for t in raw_tasks]
         return sorted(cleanTasks, key=lambda x: x['due'] if x['due'] else '9999-12-31')
 
-    #Helper function to parse through the tasks into only necessary data
+    # Helper function to parse through the tasks into only necessary data
 
     def _parse_task(self, task):
         return {
             "id": task.get("id"),
             "title": task.get("title", "(No Title)"),
-            "notes": task.get("notes", ""),  
-            "due": task.get("due"),         
+            "notes": task.get("notes", ""),
+            "due": task.get("due"),
             "status": task.get("status")
         }
     # Helper function to parse events
@@ -55,32 +55,33 @@ class GoogleCalendar:
             "is_all_day": 'dateTime' not in start_info
         }
 
-
     def getCalendarSlots(self, focus_date: datetime, days):
         if days == 3:
 
-            #If we are looks at 3 days the startdate and end date should be yesterday and tomorrow
+            # If we are looks at 3 days the startdate and end date should be yesterday and tomorrow
 
             startDate = focus_date - timedelta(days=1)
             endDate = focus_date + timedelta(days=1)
         else:
             startDate = focus_date
             endDate = focus_date
-        time_min = startDate.replace(hour=0, minute=0, second=0).isoformat() + 'Z'
-        time_max = endDate.replace(hour=23, minute=59, second=59).isoformat() + 'Z'
+        time_min = startDate.replace(
+            hour=0, minute=0, second=0).isoformat() + 'Z'
+        time_max = endDate.replace(
+            hour=23, minute=59, second=59).isoformat() + 'Z'
         events = self.calendar.events().list(
             calendarId='primary',
             timeMin=time_min,
             timeMax=time_max,
             singleEvents=True,
             orderBy='startTime'
-            ).execute()
+        ).execute()
         raw_events = events.get('items', [])
 
         # Putting data in dictionary for organization { "YYYY-MM-DD": [events] }
 
         organized_data = {}
-        
+
         current = startDate
         while current <= endDate:
             date_str = current.strftime("%Y-%m-%d")
@@ -93,9 +94,10 @@ class GoogleCalendar:
 
             # Google provides 'dateTime' (specific time) or 'date' (all-day event)
 
-            start_raw = event['start'].get('dateTime') or event['start'].get('date')
-            event_date = start_raw[:10] # Extract the YYYY-MM-DD part
-            
+            start_raw = event['start'].get(
+                'dateTime') or event['start'].get('date')
+            event_date = start_raw[:10]  # Extract the YYYY-MM-DD part
+
             # adding events to the dates that we are looking into.
 
             if event_date in organized_data:
@@ -141,4 +143,3 @@ class GoogleCalendar:
             task=taskID,
             body=t_body
         ).execute()
-
